@@ -2,7 +2,8 @@ import Foundation
 
 public struct MediaList: Decodable, Equatable, Sendable {
     public let id: Int
-    public let userId: Int
+    /// The owning user's id. `nil` when the query does not select `userId`.
+    public let userId: Int?
     public let mediaId: Int
     public let status: MediaListStatus?
     public let score: Double?
@@ -26,7 +27,7 @@ public struct MediaList: Decodable, Equatable, Sendable {
     
     public init(
         id: Int,
-        userId: Int,
+        userId: Int? = nil,
         mediaId: Int,
         status: MediaListStatus? = nil,
         score: Double? = nil,
@@ -67,9 +68,9 @@ public struct MediaList: Decodable, Equatable, Sendable {
     public init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         self.id = try container.decode(Int.self, forKey: .id)
-        self.userId = try container.decode(Int.self, forKey: .userId)
+        self.userId = try container.decodeIfPresent(Int.self, forKey: .userId)
         self.mediaId = try container.decode(Int.self, forKey: .mediaId)
-        self.status = try container.decodeIfPresent(MediaListStatus.self, forKey: .status)
+        self.status = try container.decodeLossyIfPresent(MediaListStatus.self, forKey: .status)
         self.score = try container.decodeIfPresent(Double.self, forKey: .score)
         self.progress = try container.decodeIfPresent(Int.self, forKey: .progress)
         self.progressVolumes = try container.decodeIfPresent(Int.self, forKey: .progressVolumes)

@@ -20,9 +20,11 @@ Add the following to your `Package.swift` file:
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/kunihir0/anilist-sdk.git", from: "1.0.0")
+    .package(url: "https://github.com/AtiinLabs/anilist-sdk.git", from: "1.0.0")
 ]
 ```
+
+The hosted DocC site and the `swift-docc-plugin` dependency were removed so apps that use the SDK don't resolve a documentation-only package. Whether to restore them is decided after Ito's AniList migration; see the note in `Package.swift`.
 
 ## Quick Start
 
@@ -38,7 +40,7 @@ let client = AniListClient()
 Task {
     do {
         // Build the query
-        let query = MediaQuery(id: 15125) 
+        let query = AniListQueries.MediaQuery(id: 15125)
         
         // Execute
         let response = try await client.execute(query)

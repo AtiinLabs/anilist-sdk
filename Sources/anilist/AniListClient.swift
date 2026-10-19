@@ -1,9 +1,9 @@
 import Foundation
 
 /// The main client for interacting with the AniList GraphQL API.
-public struct AniListClient {
+public struct AniListClient: Sendable {
     private let session: URLSession
-    private let tokenProvider: (() async throws -> String?)?
+    private let tokenProvider: (@Sendable () async throws -> String?)?
     private let endpoint: URL = {
         guard let url = URL(string: "https://graphql.anilist.co") else {
             fatalError("Invalid endpoint URL")
@@ -15,7 +15,7 @@ public struct AniListClient {
     /// - Parameters:
     ///   - session: The `URLSession` to use for network requests. Defaults to `.shared`.
     ///   - tokenProvider: An optional async closure that provides a valid OAuth2 Bearer token.
-    public init(session: URLSession = .shared, tokenProvider: (() async throws -> String?)? = nil) {
+    public init(session: URLSession = .shared, tokenProvider: (@Sendable () async throws -> String?)? = nil) {
         self.session = session
         self.tokenProvider = tokenProvider
     }
@@ -66,6 +66,15 @@ public struct AniListClient {
             }
             throw AniListError.rateLimitExceeded(retryAfter: retryAfter)
         }
+
+        // AniList reports failures (not found, private user, unauthorized,
+        // validation, API outages) as non-2xx responses with a GraphQL error body.
+        guard (200...299).contains(httpResponse.statusCode) else {
+            if let errors = try? JSONDecoder().decode(ErrorsOnlyResponse.self, from: data).errors, !errors.isEmpty {
+                throw AniListError.graphqlErrors(errors)
+            }
+            throw AniListError.httpError(statusCode: httpResponse.statusCode)
+        }
         
         let graphQLResponse: GraphQLResponse<T>
         do {
@@ -92,4 +101,10 @@ public struct AniListClient {
 private struct RequestPayload<V: Encodable>: Encodable {
     let query: String
     let variables: V?
+}
+
+// Decodes only the `errors` array, so error bodies whose `data` shape does not
+// match the request's response type still surface their messages.
+private struct ErrorsOnlyResponse: Decodable {
+    let errors: [GraphQLError]?
 }

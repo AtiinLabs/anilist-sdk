@@ -38,7 +38,7 @@ public struct SaveMediaListEntryMutation: GraphQLRequest {
         )
     }
 
-    public struct Variables: Encodable {
+    public struct Variables: Encodable, Sendable {
         public let id: Int?
         public let mediaId: Int?
         public let status: MediaListStatus?
@@ -64,7 +64,7 @@ public struct SaveMediaListEntryMutation: GraphQLRequest {
     }
 }
 
-public struct SaveMediaListEntryResponse: Decodable {
+public struct SaveMediaListEntryResponse: Decodable, Equatable, Sendable {
     public let saveMediaListEntry: MediaListEntry
     
     public enum CodingKeys: String, CodingKey {

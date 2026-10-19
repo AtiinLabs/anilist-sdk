@@ -90,4 +90,51 @@ internal final class QueriesTests: XCTestCase {
         XCTAssertEqual(textActivity.likeCount, 10)
         XCTAssertEqual(textActivity.createdAt, 1600000000)
     }
+
+    internal func testMediaListCollectionDecodesEntries() throws {
+        let jsonResponse = """
+        {
+            "MediaListCollection": {
+                "lists": [{
+                    "name": "Watching",
+                    "status": "CURRENT",
+                    "entries": [{
+                        "id": 10,
+                        "mediaId": 1,
+                        "status": "CURRENT",
+                        "progress": 3,
+                        "media": {"id": 1, "format": "TV", "status": "RELEASING"}
+                    }]
+                }],
+                "hasNextChunk": false
+            }
+        }
+        """
+
+        let data = try XCTUnwrap(jsonResponse.data(using: .utf8))
+        let response = try JSONDecoder().decode(AniListQueries.MediaListCollectionQuery.Response.self, from: data)
+        let entry = try XCTUnwrap(response.mediaListCollection?.lists?.first?.entries?.first)
+
+        XCTAssertNil(entry.userId)
+        XCTAssertEqual(entry.mediaId, 1)
+        XCTAssertEqual(entry.status, .current)
+        XCTAssertEqual(entry.progress, 3)
+        XCTAssertEqual(entry.media?.format, .tvSeries)
+    }
+
+    internal func testUnknownEnumValuesDecodeAsNil() throws {
+        let jsonResponse = """
+        {"id": 1, "type": "PODCAST", "format": "WEB_SERIES", "status": "ON_BREAK", "season": "MONSOON", "episodes": 12}
+        """
+
+        let data = try XCTUnwrap(jsonResponse.data(using: .utf8))
+        let media = try JSONDecoder().decode(Media.self, from: data)
+
+        XCTAssertEqual(media.id, 1)
+        XCTAssertNil(media.type)
+        XCTAssertNil(media.format)
+        XCTAssertNil(media.status)
+        XCTAssertNil(media.season)
+        XCTAssertEqual(media.episodes, 12)
+    }
 }
