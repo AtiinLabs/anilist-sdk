@@ -73,7 +73,7 @@ Task {
         let saveEntry = SaveMediaListEntryMutation(mediaId: 15125, status: .current, progress: 5)
         let response = try await client.execute(saveEntry)
         
-        print("Updated entry progress to: \(response.saveMediaListEntry.progress ?? 0)")
+        print("Updated entry progress to: \(response.saveMediaListEntry?.progress ?? 0)")
     } catch {
         print("Failed to save entry: \(error)")
     }
