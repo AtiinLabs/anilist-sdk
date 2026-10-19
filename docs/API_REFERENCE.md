@@ -54,9 +54,17 @@ Fetches the currently authenticated user's profile information.
 **Response Data:** `User`
 
 ### `MediaQuery`
-Fetches a specific Anime or Manga by its properties (like ID or search term).
-**Variables:** `id`, `search`, `type`, etc.
-**Response Data:** `Media`
+Fetches one Anime or Manga by ID, including synonyms, country of origin and its top-rated user recommendations.
+**Variables:** `id`, `recommendationsPerPage` (default 15)
+**Response Data:** `Media` (recommendations in `recommendations.nodes[].mediaRecommendation`)
+
+### `SearchQuery`
+Searches or browses Media one page at a time. Filters left `nil` or empty are not sent.
+**Variables:** `page`, `perPage`, `search`, `type`, `sort`, `season`, `seasonYear`, `genreIn`, `genreNotIn`, `tagIn`, `tagNotIn`, `formatIn`, `status`, `countryOfOrigin`, `onList` (authenticated clients only), `isAdult`
+**Response Data:** `PageInfo` and `[Media]`
+
+### `GenreCollectionQuery` / `MediaTagCollectionQuery`
+Fetch every genre name and every `MediaTag`, for building filters.
 
 ### `MediaListCollectionQuery`
 Fetches a user's lists (e.g., all Anime they have watched or are currently watching).

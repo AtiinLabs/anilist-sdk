@@ -20,8 +20,13 @@ public struct Media: Codable, Equatable, Sendable {
     public let genres: [String]?
     public let averageScore: Int?
     public let popularity: Int?
+    public let synonyms: [String]?
+    /// ISO 3166-1 alpha-2 country code, e.g. `JP`, `KR`, `CN`.
+    public let countryOfOrigin: String?
+    /// User recommendations, when the query selects them.
+    public let recommendations: MediaRecommendationConnection?
     
-    public init(id: Int, title: MediaTitle? = nil, type: MediaType? = nil, format: MediaFormat? = nil, status: MediaStatus? = nil, description: String? = nil, startDate: FuzzyDate? = nil, endDate: FuzzyDate? = nil, season: MediaSeason? = nil, seasonYear: Int? = nil, episodes: Int? = nil, duration: Int? = nil, chapters: Int? = nil, volumes: Int? = nil, coverImage: MediaCoverImage? = nil, bannerImage: String? = nil, genres: [String]? = nil, averageScore: Int? = nil, popularity: Int? = nil) {
+    public init(id: Int, title: MediaTitle? = nil, type: MediaType? = nil, format: MediaFormat? = nil, status: MediaStatus? = nil, description: String? = nil, startDate: FuzzyDate? = nil, endDate: FuzzyDate? = nil, season: MediaSeason? = nil, seasonYear: Int? = nil, episodes: Int? = nil, duration: Int? = nil, chapters: Int? = nil, volumes: Int? = nil, coverImage: MediaCoverImage? = nil, bannerImage: String? = nil, genres: [String]? = nil, averageScore: Int? = nil, popularity: Int? = nil, synonyms: [String]? = nil, countryOfOrigin: String? = nil, recommendations: MediaRecommendationConnection? = nil) {
         self.id = id
         self.title = title
         self.type = type
@@ -41,10 +46,13 @@ public struct Media: Codable, Equatable, Sendable {
         self.genres = genres
         self.averageScore = averageScore
         self.popularity = popularity
+        self.synonyms = synonyms
+        self.countryOfOrigin = countryOfOrigin
+        self.recommendations = recommendations
     }
 
     public enum CodingKeys: String, CodingKey {
-        case id, title, type, format, status, description, startDate, endDate, season, seasonYear, episodes, duration, chapters, volumes, coverImage, bannerImage, genres, averageScore, popularity
+        case id, title, type, format, status, description, startDate, endDate, season, seasonYear, episodes, duration, chapters, volumes, coverImage, bannerImage, genres, averageScore, popularity, synonyms, countryOfOrigin, recommendations
     }
 
     public init(from decoder: Decoder) throws {
@@ -68,6 +76,32 @@ public struct Media: Codable, Equatable, Sendable {
         self.genres = try container.decodeIfPresent([String].self, forKey: .genres)
         self.averageScore = try container.decodeIfPresent(Int.self, forKey: .averageScore)
         self.popularity = try container.decodeIfPresent(Int.self, forKey: .popularity)
+        self.synonyms = try container.decodeIfPresent([String].self, forKey: .synonyms)
+        self.countryOfOrigin = try container.decodeIfPresent(String.self, forKey: .countryOfOrigin)
+        self.recommendations = try container.decodeIfPresent(MediaRecommendationConnection.self, forKey: .recommendations)
+    }
+}
+
+/// A page of user recommendations for a media.
+public struct MediaRecommendationConnection: Codable, Equatable, Sendable {
+    public let nodes: [MediaRecommendation]?
+
+    public init(nodes: [MediaRecommendation]? = nil) {
+        self.nodes = nodes
+    }
+}
+
+/// One user recommendation.
+public struct MediaRecommendation: Codable, Equatable, Sendable {
+    public let id: Int?
+    public let rating: Int?
+    /// The recommended media.
+    public let mediaRecommendation: Media?
+
+    public init(id: Int? = nil, rating: Int? = nil, mediaRecommendation: Media? = nil) {
+        self.id = id
+        self.rating = rating
+        self.mediaRecommendation = mediaRecommendation
     }
 }
 
