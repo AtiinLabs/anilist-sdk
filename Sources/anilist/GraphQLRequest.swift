@@ -1,12 +1,12 @@
 import Foundation
 
 /// A protocol representing a single GraphQL request (query or mutation).
-public protocol GraphQLRequest {
+public protocol GraphQLRequest: Sendable {
     /// The expected decodable response type.
-    associatedtype Response: Decodable
+    associatedtype Response: Decodable & Sendable
     
     /// The type of the variables. Use `String` or a custom struct.
-    associatedtype Variables: Encodable 
+    associatedtype Variables: Encodable & Sendable
     
     /// The raw GraphQL query string.
     var query: String { get }

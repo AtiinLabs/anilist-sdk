@@ -1,7 +1,7 @@
 import Foundation
 
 /// Errors that can occur when interacting with the AniList API.
-public enum AniListError: Error, Equatable {
+public enum AniListError: Error, Equatable, Sendable {
     /// A generic network error occurred (e.g., no internet connection).
     case networkError(URLError)
     
@@ -36,6 +36,31 @@ public enum AniListError: Error, Equatable {
             
         default:
             return false
+        }
+    }
+}
+
+extension AniListError: LocalizedError {
+    /// A readable description; GraphQL errors use the server's messages.
+    public var errorDescription: String? {
+        switch self {
+        case .networkError(let error):
+            return error.localizedDescription
+
+        case .httpError(let statusCode):
+            return "AniList returned HTTP \(statusCode)."
+
+        case .rateLimitExceeded(let retryAfter):
+            if let retryAfter {
+                return "AniList rate limit exceeded. Retry after \(retryAfter) seconds."
+            }
+            return "AniList rate limit exceeded."
+
+        case .graphqlErrors(let errors):
+            return errors.map(\.message).joined(separator: "\n")
+
+        case .decodingError(let message):
+            return message
         }
     }
 }

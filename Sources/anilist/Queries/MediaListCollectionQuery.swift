@@ -37,6 +37,7 @@ public extension AniListQueries {
                   status
                   entries {
                     id
+                    userId
                     mediaId
                     status
                     score

@@ -42,6 +42,33 @@ public struct Media: Codable, Equatable, Sendable {
         self.averageScore = averageScore
         self.popularity = popularity
     }
+
+    public enum CodingKeys: String, CodingKey {
+        case id, title, type, format, status, description, startDate, endDate, season, seasonYear, episodes, duration, chapters, volumes, coverImage, bannerImage, genres, averageScore, popularity
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        self.id = try container.decode(Int.self, forKey: .id)
+        self.title = try container.decodeIfPresent(MediaTitle.self, forKey: .title)
+        self.type = try container.decodeLossyIfPresent(MediaType.self, forKey: .type)
+        self.format = try container.decodeLossyIfPresent(MediaFormat.self, forKey: .format)
+        self.status = try container.decodeLossyIfPresent(MediaStatus.self, forKey: .status)
+        self.description = try container.decodeIfPresent(String.self, forKey: .description)
+        self.startDate = try container.decodeIfPresent(FuzzyDate.self, forKey: .startDate)
+        self.endDate = try container.decodeIfPresent(FuzzyDate.self, forKey: .endDate)
+        self.season = try container.decodeLossyIfPresent(MediaSeason.self, forKey: .season)
+        self.seasonYear = try container.decodeIfPresent(Int.self, forKey: .seasonYear)
+        self.episodes = try container.decodeIfPresent(Int.self, forKey: .episodes)
+        self.duration = try container.decodeIfPresent(Int.self, forKey: .duration)
+        self.chapters = try container.decodeIfPresent(Int.self, forKey: .chapters)
+        self.volumes = try container.decodeIfPresent(Int.self, forKey: .volumes)
+        self.coverImage = try container.decodeIfPresent(MediaCoverImage.self, forKey: .coverImage)
+        self.bannerImage = try container.decodeIfPresent(String.self, forKey: .bannerImage)
+        self.genres = try container.decodeIfPresent([String].self, forKey: .genres)
+        self.averageScore = try container.decodeIfPresent(Int.self, forKey: .averageScore)
+        self.popularity = try container.decodeIfPresent(Int.self, forKey: .popularity)
+    }
 }
 
 public struct MediaTitle: Codable, Equatable, Sendable {

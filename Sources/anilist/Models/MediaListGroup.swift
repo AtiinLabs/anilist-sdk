@@ -31,6 +31,6 @@ public struct MediaListGroup: Decodable, Equatable, Sendable {
         self.name = try container.decodeIfPresent(String.self, forKey: .name)
         self.isCustomList = try container.decodeIfPresent(Bool.self, forKey: .isCustomList) ?? false
         self.isSplitCompletedList = try container.decodeIfPresent(Bool.self, forKey: .isSplitCompletedList) ?? false
-        self.status = try container.decodeIfPresent(MediaListStatus.self, forKey: .status)
+        self.status = try container.decodeLossyIfPresent(MediaListStatus.self, forKey: .status)
     }
 }

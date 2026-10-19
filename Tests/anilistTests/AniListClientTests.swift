@@ -155,4 +155,40 @@ internal final class AniListClientTests: XCTestCase {
         XCTAssertEqual(result.viewer?.id, 123)
         XCTAssertEqual(result.viewer?.name, "TestUser")
     }
+
+    internal func testExecute_NotFoundStatusSurfacesGraphQLErrors() async throws {
+        let jsonResponse = """
+        {"errors":[{"message":"Not Found.","status":404}],"data":{"Viewer":null}}
+        """
+
+        MockURLProtocol.requestHandler = { request in
+            let url = try XCTUnwrap(request.url)
+            let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 404, httpVersion: nil, headerFields: nil))
+            let data = try XCTUnwrap(jsonResponse.data(using: .utf8))
+            return (response, data)
+        }
+
+        do {
+            _ = try await client.execute(AniListQueries.ViewerQuery())
+            XCTFail("Expected graphqlErrors")
+        } catch let error as AniListError {
+            XCTAssertEqual(error, .graphqlErrors([GraphQLError(message: "Not Found.", status: 404)]))
+            XCTAssertEqual(error.localizedDescription, "Not Found.")
+        }
+    }
+
+    internal func testExecute_ServerErrorWithoutGraphQLBodyThrowsHTTPError() async throws {
+        MockURLProtocol.requestHandler = { request in
+            let url = try XCTUnwrap(request.url)
+            let response = try XCTUnwrap(HTTPURLResponse(url: url, statusCode: 502, httpVersion: nil, headerFields: nil))
+            return (response, Data("<html>Bad Gateway</html>".utf8))
+        }
+
+        do {
+            _ = try await client.execute(AniListQueries.ViewerQuery())
+            XCTFail("Expected httpError")
+        } catch let error as AniListError {
+            XCTAssertEqual(error, .httpError(statusCode: 502))
+        }
+    }
 }
