@@ -1,19 +1,80 @@
 import Foundation
 
 /// A mutation to create or update a media list entry.
+///
+/// Pass `id` to update an existing entry or `mediaId` to create or update the
+/// viewer's entry for that media. Fields left `nil` are not sent and keep their
+/// current values. Requires an authenticated client.
 public struct SaveMediaListEntryMutation: GraphQLRequest {
-    public typealias Response = SaveMediaListEntryResponse
+    /// The saved entry.
+    public struct Response: Decodable, Equatable, Sendable {
+        /// The entry as stored after the mutation.
+        public let saveMediaListEntry: MediaList?
+
+        public enum CodingKeys: String, CodingKey {
+            case saveMediaListEntry = "SaveMediaListEntry"
+        }
+    }
+
+    /// The entry fields to write.
+    public struct Variables: Encodable, Equatable, Sendable {
+        public let id: Int?
+        public let mediaId: Int?
+        public let status: MediaListStatus?
+        public let score: Double?
+        public let scoreRaw: Int?
+        public let progress: Int?
+        public let progressVolumes: Int?
+        public let `repeat`: Int?
+        public let priority: Int?
+        // swiftlint:disable:next discouraged_optional_boolean
+        public let `private`: Bool?
+        public let notes: String?
+        // swiftlint:disable:next discouraged_optional_boolean
+        public let hiddenFromStatusLists: Bool?
+        public let customLists: [String]?
+        public let startedAt: FuzzyDate?
+        public let completedAt: FuzzyDate?
+    }
 
     public var query: String {
         """
-        mutation SaveMediaListEntry($id: Int, $mediaId: Int, $status: MediaListStatus, $score: Float, $scoreRaw: Int, $progress: Int) {
-            SaveMediaListEntry(id: $id, mediaId: $mediaId, status: $status, score: $score, scoreRaw: $scoreRaw, progress: $progress) {
-                id
-                mediaId
-                status
-                score
-                progress
-            }
+        mutation (
+          $id: Int,
+          $mediaId: Int,
+          $status: MediaListStatus,
+          $score: Float,
+          $scoreRaw: Int,
+          $progress: Int,
+          $progressVolumes: Int,
+          $repeat: Int,
+          $priority: Int,
+          $private: Boolean,
+          $notes: String,
+          $hiddenFromStatusLists: Boolean,
+          $customLists: [String],
+          $startedAt: FuzzyDateInput,
+          $completedAt: FuzzyDateInput
+        ) {
+          SaveMediaListEntry(
+            id: $id,
+            mediaId: $mediaId,
+            status: $status,
+            score: $score,
+            scoreRaw: $scoreRaw,
+            progress: $progress,
+            progressVolumes: $progressVolumes,
+            repeat: $repeat,
+            priority: $priority,
+            private: $private,
+            notes: $notes,
+            hiddenFromStatusLists: $hiddenFromStatusLists,
+            customLists: $customLists,
+            startedAt: $startedAt,
+            completedAt: $completedAt
+          ) {
+            \(Selections.mediaListEntry)
+          }
         }
         """
     }
@@ -26,7 +87,18 @@ public struct SaveMediaListEntryMutation: GraphQLRequest {
         status: MediaListStatus? = nil,
         score: Double? = nil,
         scoreRaw: Int? = nil,
-        progress: Int? = nil
+        progress: Int? = nil,
+        progressVolumes: Int? = nil,
+        `repeat`: Int? = nil,
+        priority: Int? = nil,
+        // swiftlint:disable:next discouraged_optional_boolean
+        `private`: Bool? = nil,
+        notes: String? = nil,
+        // swiftlint:disable:next discouraged_optional_boolean
+        hiddenFromStatusLists: Bool? = nil,
+        customLists: [String]? = nil,
+        startedAt: FuzzyDate? = nil,
+        completedAt: FuzzyDate? = nil
     ) {
         self.variables = Variables(
             id: id,
@@ -34,48 +106,16 @@ public struct SaveMediaListEntryMutation: GraphQLRequest {
             status: status,
             score: score,
             scoreRaw: scoreRaw,
-            progress: progress
+            progress: progress,
+            progressVolumes: progressVolumes,
+            repeat: `repeat`,
+            priority: priority,
+            private: `private`,
+            notes: notes,
+            hiddenFromStatusLists: hiddenFromStatusLists,
+            customLists: customLists,
+            startedAt: startedAt,
+            completedAt: completedAt
         )
     }
-
-    public struct Variables: Encodable, Sendable {
-        public let id: Int?
-        public let mediaId: Int?
-        public let status: MediaListStatus?
-        public let score: Double?
-        public let scoreRaw: Int?
-        public let progress: Int?
-        
-        public init(
-            id: Int? = nil,
-            mediaId: Int? = nil,
-            status: MediaListStatus? = nil,
-            score: Double? = nil,
-            scoreRaw: Int? = nil,
-            progress: Int? = nil
-        ) {
-            self.id = id
-            self.mediaId = mediaId
-            self.status = status
-            self.score = score
-            self.scoreRaw = scoreRaw
-            self.progress = progress
-        }
-    }
-}
-
-public struct SaveMediaListEntryResponse: Decodable, Equatable, Sendable {
-    public let saveMediaListEntry: MediaListEntry
-    
-    public enum CodingKeys: String, CodingKey {
-        case saveMediaListEntry = "SaveMediaListEntry"
-    }
-}
-
-public struct MediaListEntry: Decodable, Equatable, Sendable {
-    public let id: Int
-    public let mediaId: Int?
-    public let status: MediaListStatus?
-    public let score: Double?
-    public let progress: Int?
 }

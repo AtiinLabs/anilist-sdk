@@ -64,3 +64,20 @@ extension AniListError: LocalizedError {
         }
     }
 }
+
+public extension AniListError {
+    /// Whether AniList answered 404: the media, list entry or user does not exist,
+    /// or the user's lists are private.
+    var isNotFound: Bool {
+        switch self {
+        case .graphqlErrors(let errors):
+            return errors.contains { $0.status == 404 }
+
+        case .httpError(let statusCode):
+            return statusCode == 404
+
+        default:
+            return false
+        }
+    }
+}

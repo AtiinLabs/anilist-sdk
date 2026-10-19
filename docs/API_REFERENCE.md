@@ -9,7 +9,7 @@ The primary interface for executing API requests.
 
 **Initialization:**
 ```swift
-public init(session: URLSession = .shared, tokenProvider: (() async throws -> String?)? = nil)
+public init(session: URLSession = .shared, tokenProvider: (@Sendable () async throws -> String?)? = nil)
 ```
 - `session`: Custom `URLSession` for network requests.
 - `tokenProvider`: A closure returning a Bearer token string (or nil) for authenticated requests.
@@ -24,9 +24,9 @@ Executes a generic request conforming to `GraphQLRequest` and decodes the typed 
 The foundational protocol for all queries and mutations.
 
 ```swift
-public protocol GraphQLRequest {
-    associatedtype Response: Decodable
-    associatedtype Variables: Encodable
+public protocol GraphQLRequest: Sendable {
+    associatedtype Response: Decodable & Sendable
+    associatedtype Variables: Encodable & Sendable
     
     var query: String { get }
     var variables: Variables? { get }
@@ -36,10 +36,12 @@ public protocol GraphQLRequest {
 ### `AniListError` (Enum)
 Error types thrown by the `AniListClient`.
 - `.networkError(URLError)`: Underlying network transport failures.
-- `.httpError(statusCode: Int)`: Unexpected HTTP responses.
+- `.httpError(statusCode: Int)`: Non-2xx responses without a GraphQL error body.
 - `.rateLimitExceeded(retryAfter: Int?)`: Hit rate limit (HTTP 429).
-- `.graphqlErrors([GraphQLError])`: Specific data constraint errors returned by AniList.
+- `.graphqlErrors([GraphQLError])`: Errors returned by AniList, including the non-2xx not found (404), unauthorized (401) and validation (400) responses.
 - `.decodingError(String)`: Swift parsing / Codable failures.
+
+`isNotFound` is true for AniList 404s: a missing media, list entry or user, or a private user's lists. `localizedDescription` uses AniList's error messages.
 
 ---
 
@@ -57,9 +59,13 @@ Fetches a specific Anime or Manga by its properties (like ID or search term).
 **Response Data:** `Media`
 
 ### `MediaListCollectionQuery`
-Fetches a user's entire list collection (e.g., all Anime they have watched or are currently watching).
-**Variables:** `userId`, `userName`, `type`
-**Response Data:** `MediaListCollection` (containing arrays of `MediaListGroup` and `MediaList`)
+Fetches a user's lists (e.g., all Anime they have watched or are currently watching).
+**Variables:** `userId`, `userName`, `type`, `statusIn`, `forceSingleCompletedList`, `chunk`, `perChunk`
+**Response Data:** `MediaListCollection` (containing arrays of `MediaListGroup` and `MediaList`). Large lists are split into chunks; request the next `chunk` while `hasNextChunk` is true.
+
+### `MediaListEntryQuery`
+Fetches one list entry by entry `id`, or by `userId`/`userName` and `mediaId`. A user without an entry for the media answers 404, so catch `AniListError` and check `isNotFound`.
+**Response Data:** `MediaList`
 
 ### `ActivityQuery`
 Fetches global or user-specific social feeds.
@@ -78,9 +84,13 @@ Fetches global or user-specific social feeds.
 All mutations are located in `Sources/anilist/Mutations/`.
 
 ### `SaveMediaListEntryMutation`
-Creates or updates a user's progress for a specific `Media` item.
-**Variables:** `id` (list entry ID), `mediaId`, `status`, `score`, `progress`
-**Response Data:** `MediaListEntry`
+Creates or updates a list entry. Fields left `nil` are not sent and keep their current values.
+**Variables:** `id` (list entry ID), `mediaId`, `status`, `score`, `scoreRaw`, `progress`, `progressVolumes`, `repeat`, `priority`, `private`, `notes`, `hiddenFromStatusLists`, `customLists`, `startedAt`, `completedAt`
+**Response Data:** `MediaList`
+
+### `DeleteMediaListEntryMutation`
+Deletes a list entry by its entry `id` (`MediaList.id`, not the media id).
+**Response Data:** `Deleted`
 
 *(Note: Mutations require the client to be initialized with a valid `tokenProvider`)*
 
